@@ -11,8 +11,6 @@ parser.add_argument("-r", "--ref", nargs=1, type=str, required=True,
                     help="USGS reference file for model archival")
 parser.add_argument("-i", "--ipds", nargs=1, type=str, required=True,
                     help="USGS IPDS ID number")
-parser.add_argument("-d", "--date", nargs=1, type=str, required=True,
-                    help="Model start date fmt: mm-dd-yyyy")
 parser.add_argument("--hds", nargs=1, type=str,
                     help="Model binary head file")
 parser.add_argument("--ucn", nargs=1, type=str,
@@ -21,8 +19,6 @@ parser.add_argument("--cbc", nargs=1, type=str,
                     help="Model binary cell budget file")
 parser.add_argument("--ws", nargs=1, type=str,
                     help="Model directory path")
-parser.add_argument("-v", "--version", nargs=1, type=str,
-                    help="Modflow version, default: mf2005")
 
 args = parser.parse_args()
 
@@ -44,17 +40,13 @@ if args.ws is not None:
 nam = args.nam[0]
 ref = args.ref[0]
 ipds = args.ipds[0]
-date = args.date[0]
-if len(date) != 10:
-    err = "Date must be supplied in mm-dd-yyyy format"
-    raise AssertionError(err)
 
 version = 'mf2005'
 if version is not None:
     version = args.version[0]
 
-gwweb = GwWebFlow(nam, ref, ipds, date, output_dict,
-                  ws, version)
+gwweb = GwWebFlow(nam, ref, ipds, output_dict,
+                  ws)
 
 gwweb.create_netcdf_input_file()
 gwweb.create_netcdf_output_file()
