@@ -1,5 +1,6 @@
 import os
 import flopy as fp
+from  .seawat import Seawat
 
 
 class GwWebFlow(object):
@@ -61,17 +62,23 @@ class GwWebFlow(object):
         self.epsg = None
         self._read_usgs_model_reference_file()
 
-        if self.version == "swtv4":
-            pass
+        if self.version == "seawat":
+            # call mf2web.seawat.Seawat b/c modelgrid.idomain broken in flopy seawat
+            self.model = Seawat.load(os.path.join(self.model_ws,
+                                                  self.namefile),
+                                      model_ws=self.model_ws,
+                                      version=self.version)
 
         elif self.version == "mf6":
-            pass
+            raise NotImplementedError()
 
-        elif self.version in ("gsflow", "mfowhm"):
-            err = "Gsflow and OWHM are not yet supported"
+        elif self.version in ("gsflow", "mfowhm",
+                              "mf88", "mf96", "mf2000"):
+            err = "{} is not yet supported".format(self.version)
             raise NotImplementedError(err)
 
         else:
+            # method for modflow-2000, 2005, and nwt models
             self.model = fp.modflow.Modflow.load(os.path.join(model_ws,
                                                               self.namefile),
                                                  model_ws=self.model_ws,
@@ -84,15 +91,47 @@ class GwWebFlow(object):
             self.model.modelgrid.set_coord_info(self.xll, self.yll, self.rotation,
                                                 self.epsg, self.proj4)
 
+            if self.version == "seawat":
+                if self.model._mf is not None:
+                    self.model._mf.modelgrid.set_coord_info(self.xll, self.yll,
+                                                            self.rotation,
+                                                            self.epsg, self.proj4)
+
+                if self.model._mt is not None:
+                    self.model._mt.modelgrid.set_coord_info(self.xll, self.yll,
+                                                            self.rotation,
+                                                            self.epsg, self.proj4)
+
         if (self.xul, self.yul) != (None, None):
             if self.rotation is not None:
                 self.model.modelgrid._angrot = self.rotation
 
-            self.model.modelgrid.set_coord_info(self.model.modelgrid._xul_to_xll(self.xul),
-                                                self.model.modelgrid._yul_to_yll(self.yul),
-                                                self.rotation,
-                                                self.epsg,
-                                                self.proj4)
+            self.model.modelgrid._xoff = self.model.modelgrid._xul_to_xll(self.xul)
+            self.model.modelgrid._yoff = self.model.modelgrid._yul_to_yll(self.yul)
+            self.model.modelgrid.epsg = self.epsg
+            self.model.modelgrid.proj4 = self.proj4
+            self.model.modelgrid._require_cache_updates()
+
+            if self.version == "seawat":
+                if self.model._mf is not None:
+                    if self.rotation is not None:
+                        self.model._mf.modelgrid._angrot = self.rotation
+
+                    self.model._mf.modelgrid._xoff = self.model.modelgrid._xul_to_xll(self.xul)
+                    self.model._mf.modelgrid._yoff = self.model.modelgrid._yul_to_yll(self.yul)
+                    self.model._mf.modelgrid.epsg = self.epsg
+                    self.model._mf.modelgrid.proj4 = self.proj4
+                    self.model._mf.modelgrid._require_cache_updates()
+
+                if self.model._mt is not None:
+                    if self.rotation is not None:
+                        self.model._mt.modelgrid._angrot = self.rotation
+
+                    self.model._mt.modelgrid._xoff = self.model.modelgrid._xul_to_xll(self.xul)
+                    self.model._mt.modelgrid._yoff = self.model.modelgrid._yul_to_yll(self.yul)
+                    self.model._mt.modelgrid.epsg = self.epsg
+                    self.model._mt.modelgrid.proj4 = self.proj4
+                    self.model._mt.modelgrid._require_cache_updates()
 
     def create_netcdf_input_file(self):
         """
@@ -170,12 +209,14 @@ class GwWebFlow(object):
                                     elif "nwt" in data.lower():
                                         self.version = "mfnwt"
                                     elif "sea" in data.lower():
-                                        self.version = "swtv4"
+                                        self.version = "seawat"
                                     elif "6" in data.lower():
                                         self.version = "mf6"
+                                    elif "2000" in data.lower():
+                                        self.version = "mf2k"
                                     else:
                                         print("Warning, Unrecognised version: {}".format(data))
-                                        print("Setting version to mf2005")
+                                        print("Setting version to modflow-2005")
                                 else:
                                     pass
 
@@ -195,9 +236,3 @@ class GwWebFlow(object):
 
             if self.start_time is None:
                 self.start_time = "00:00:00"
-
-
-
-
-if __name__ == "__main__":
-    pass
