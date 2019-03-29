@@ -20,5 +20,5 @@ setup(name="mf2web",
       platforms='Windows, Mac OS-X, Linux',
       install_requires=['flopy',
                         'numpy>=1.9'],
-      packages=['mf2web'],
+      packages=['mf2web', 'mf2web.seawat', 'mf2web.mt3d', 'mf2web.mf88'],
       version=0.1)
