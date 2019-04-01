@@ -63,7 +63,19 @@ class Modflow88(BaseModel):
             8: mf2web.mf88.Modflow88Sip,
             9: None,
             10: mf2web.mf88.Modflow88Sor,
-            11: mf2web.mf88.Modflow88Oc
+            11: mf2web.mf88.Modflow88Oc,
+            12: None,
+            13: None,
+            14: None,
+            15: None,
+            16: None,
+            17: None,
+            18: None,
+            19: None,
+            20: None,
+            21: None,
+            22: None,
+            23: None
         }
 
     def __repr__(self):
@@ -248,10 +260,13 @@ class Modflow88(BaseModel):
                         pak.load(os.path.join(model_ws, fname), ml,
                                  ext_unit_dict=ext_unit_dict)
                     except Exception as e:
-                        print("Package load error")
+                        print("Package load error: iunit position {}".format(pos + 1))
 
                 else:
                     pak = ml.mfnam_packages[pos]
+                    if pak is None:
+                        print("iunit position not implemented {}".format(pos + 1))
+                        continue
                     fname = ext_unit_dict.pop(unit)
                     pak.load(os.path.join(model_ws, fname), ml,
                              ext_unit_dict=ext_unit_dict)
