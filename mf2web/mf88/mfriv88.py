@@ -1,5 +1,6 @@
 from flopy.pakbase import Package
-from flopy.utils import Util3d, Util2d, create_empty_recarray
+from flopy.utils import MfList, create_empty_recarray
+from ..utils import mflist_reader
 import numpy as np
 import sys
 
@@ -12,7 +13,7 @@ class Modflow88Riv(Package):
     """
     def __init__(self, model, ipakcb=None, stress_period_data=None):
 
-        unitnumber = [4]
+        unitnumber = 4
         filenames = [None]
         name = [Modflow88Riv.ftype()]
         units = [unitnumber]
@@ -23,6 +24,9 @@ class Modflow88Riv(Package):
         super(Modflow88Riv, self).__init__(self, model, extension=extension,
                                            name=name, unit_number=units, extra=extra,
                                            filenames=fname)
+
+        self.stress_period_data = MfList(self, stress_period_data)
+        self.parent.add_package(self)
 
     @staticmethod
     def get_empty(ncells=0, aux_names=None, structured=True):
@@ -40,7 +44,7 @@ class Modflow88Riv(Package):
                          ("cond", np.float32), ("rbot", np.float32)])
 
     @staticmethod
-    def load(f, model, nper=1):
+    def load(f, model, nper=1, ext_unit_dict=None):
         """
         Method to load a modflow River package
 
@@ -51,12 +55,13 @@ class Modflow88Riv(Package):
         model : mf88 object
         nper : int
             number of stress periods
+        ext_unit_dict : dict
+            Dictionary of unit and file names
 
         Returns
         -------
             Modflow88Riv object
         """
-        ext_unit_dict = None
 
         if model.verbose:
             sys.stdout.write('loading bas6 package file...\n')
@@ -65,32 +70,14 @@ class Modflow88Riv(Package):
             filename = f
             f = open(filename, 'r')
 
+        if model.nrow_ncol_nlay_nper != (0, 0, 0, 0):
+            nrow, ncol, nlay, nper = model.nrow_ncol_nlay_nper
+
         t = f.readline().strip()
         maxrivr = int(t[0])
         irivcb = int(t[1])
 
-        stress_period_data = {}
-
-        for per in range(nper):
-            t = f.readline().split()
-            itmp = int(t[0])
-
-            if itmp < 0:
-                recarray = stress_period_data[per - 1]
-            else:
-                recarray = Modflow88Riv.get_empty(itmp)
-                for rec in range(itmp):
-                    t = f.readline().split()
-                    k = int(t[0]) - 1
-                    i = int(t[1]) - 1
-                    j = int(t[2]) - 1
-                    stage = float(t[3])
-                    cond = float(t[4])
-                    rbot = float(t[5])
-
-                    recarray[rec] = (k, i, j, stage, cond, rbot)
-
-            stress_period_data[per] = recarray
+        stress_period_data = mflist_reader(f, Modflow88Riv, nper)
 
         return Modflow88Riv(model, irivcb, stress_period_data)
 

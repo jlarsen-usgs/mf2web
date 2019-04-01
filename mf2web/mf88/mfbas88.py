@@ -14,9 +14,10 @@ class Modflow88Bas(Package):
     def __init__(self, model, nlay=1, nrow=1, ncol=1, nper=1,
                  itemuni=0, iunit=(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
                  iapart=0, istrt=0, ibound=1, hnoflo=-9999.,
-                 shead=1., perlen=1., nstp=1, tsmult=1.):
+                 shead=1., perlen=1., nstp=1, tsmult=1.,
+                 start_datetime="1-1-1970"):
 
-        unitnumber = [0]
+        unitnumber = 99
         filenames = [None]
         name = [Modflow88Bas.ftype()]
         units = [unitnumber]
@@ -51,8 +52,14 @@ class Modflow88Bas(Package):
         self.tsmult = Util2d(model, (self.nper,), np.float, tsmult,
                              name='tsmult')
 
+        self.start_datetime = start_datetime
+        self.itmuni_dict = {0: "undefined", 1: "seconds", 2: "minutes",
+                            3: "hours", 4: "days", 5: "years"}
+
+        self.parent.add_package(self)
+
     @staticmethod
-    def load(f, model):
+    def load(f, model, ext_unit_dict=None):
         """
         Load an existing package
 
@@ -63,13 +70,14 @@ class Modflow88Bas(Package):
         model : model object
             The model object (of type :class:`flopy.modflow.mf.Modflow`) to
             which this package will be added.
+        ext_unit_dict : dict
+            Dictionary of unit and file names
 
         Returns
         -------
         bas : Modflow88Bas object
             Modflow88Bas object (of type :class:`mf2web.mf88.Modflow88Bas`)
         """
-        ext_unit_dict = None
 
         if model.verbose:
             sys.stdout.write('loading bas6 package file...\n')

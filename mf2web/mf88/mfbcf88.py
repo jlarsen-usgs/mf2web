@@ -19,7 +19,7 @@ class Modflow88Bcf(Package):
         unitnumber = [1, ibcfcb]
         filenames = [None, None]
         name = [Modflow88Bcf.ftype()]
-        units = [unitnumber]
+        units = [unitnumber[0]]
         extra = [""]
         fname = [filenames[0]]
         extension = "bas"
@@ -42,8 +42,10 @@ class Modflow88Bcf(Package):
         self.sf2 = sf2
         self.top = top
 
+        self.parent.add_package(self)
+
     @staticmethod
-    def load(f, model, nlay=1, nrow=1, ncol=1):
+    def load(f, model, nlay=1, nrow=1, ncol=1, ext_unit_dict=None):
         """
         Load an existing package
 
@@ -60,13 +62,14 @@ class Modflow88Bcf(Package):
             number of model rows
         ncol : int
             number of model columns
+        ext_unit_dict : dict
+            Dictionary of unit and file names
 
         Returns
         -------
         bcf : Modflow88Bas object
             Modflow88Bcf object (of type :class:`mf2web.mf88.Modflow88Bcf`)
         """
-        ext_unit_dict = None
 
         if model.verbose:
             sys.stdout.write('loading bas6 package file...\n')
@@ -74,6 +77,9 @@ class Modflow88Bcf(Package):
         if not hasattr(f, 'read'):
             filename = f
             f = open(filename, 'r')
+
+        if model.nrow_ncol_nlay_nper != (0, 0, 0, 0):
+            nrow, ncol, nlay, nper = model.nrow_ncol_nlay_nper
 
         iss, ibcfcb = [int(i) for i in f.readline()[0:20].split()]
 

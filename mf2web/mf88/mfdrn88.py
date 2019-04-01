@@ -5,24 +5,24 @@ import numpy as np
 import sys
 
 
-class Modflow88Ghb(Package):
+class Modflow88Drn(Package):
     """
-    Modflow88Wel package class for River package
+        Modflow88Wel package class for River package
 
-    see modflow 88 manual for documentation
-    """
+        see modflow 88 manual for documentation
+        """
 
-    def __init__(self, model, ighbcb=None, stress_period_data=None):
+    def __init__(self, model, idrncb=None, stress_period_data=None):
 
-        unitnumber = 7
+        unitnumber = 3
         filenames = [None]
-        name = [Modflow88Ghb.ftype()]
+        name = [Modflow88Drn.ftype()]
         units = [unitnumber]
         extra = [""]
         fname = [filenames[0]]
-        extension = "ghb"
+        extension = "drn"
 
-        super(Modflow88Ghb, self).__init__(self, model, extension=extension,
+        super(Modflow88Drn, self).__init__(self, model, extension=extension,
                                            name=name, unit_number=units, extra=extra,
                                            filenames=fname)
 
@@ -32,21 +32,22 @@ class Modflow88Ghb(Package):
     @staticmethod
     def get_empty(ncells=0, aux_names=None, structured=True):
         # get an empty recarray that corresponds to dtype
-        dtype = Modflow88Ghb.get_default_dtype()
+        dtype = Modflow88Drn.get_default_dtype(structured=structured)
         if aux_names is not None:
             dtype = Package.add_to_dtype(dtype, aux_names, np.float32)
         return create_empty_recarray(ncells, dtype, default_value=-1.0E+10)
 
     @staticmethod
-    def get_default_dtype():
+    def get_default_dtype(structured=True):
+
         return np.dtype([("k", np.int), ("i", np.int),
-                         ("j", np.int), ("bhead", np.float32),
+                         ("j", np.int), ("elev", np.float32),
                          ("cond", np.float32)])
 
     @staticmethod
     def load(f, model, nper=1, ext_unit_dict=None):
         """
-        Method to load a modflow River package
+        Method to load a modflow Drain package
 
         Parameters
         ----------
@@ -60,9 +61,8 @@ class Modflow88Ghb(Package):
 
         Returns
         -------
-            Modflow88Ghb object
+            Modflow88Drn object
         """
-        ext_unit_dict = None
 
         if model.verbose:
             sys.stdout.write('loading bas6 package file...\n')
@@ -75,12 +75,12 @@ class Modflow88Ghb(Package):
             nrow, ncol, nlay, nper = model.nrow_ncol_nlay_nper
 
         t = f.readline().strip().split()
-        mxbnd, ighbcb = int(t[0]), int(t[1])
+        mxdrn, idrncb = int(t[0]), int(t[1])
 
-        stress_period_data = mflist_reader(f, Modflow88Ghb, nper)
+        stress_period_data = mflist_reader(f, Modflow88Drn, nper)
 
-        return Modflow88Ghb(model, ighbcb, stress_period_data)
+        return Modflow88Drn(model, idrncb, stress_period_data)
 
     @staticmethod
     def ftype():
-        return "GHB"
+        return "DRN"

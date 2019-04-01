@@ -35,9 +35,10 @@ class Modflow88Oc(Package):
         self.ddpr = ddpr
         self.hdsv = hdsv
         self.ddsv = ddsv
+        self.parent.add_package(self)
 
     @staticmethod
-    def load(f, model, ntsp=1, nlay=1):
+    def load(f, model, ntsp=1, nlay=1, ext_unit_dict=None):
         """
         Load an existing package
 
@@ -52,6 +53,8 @@ class Modflow88Oc(Package):
             number of model time steps
         nlay : int
             number of model layers
+        ext_unit_dict : dict
+            Dictionary of unit and file names
 
         Returns
         -------
@@ -64,6 +67,9 @@ class Modflow88Oc(Package):
         if not hasattr(f, 'read'):
             filename = f
             f = open(filename, 'r')
+
+        if model.nrow_ncol_nlay_nper != (0, 0, 0, 0):
+            nrow, ncol, nlay, nper = model.nrow_ncol_nlay_nper
 
         t = f.readline()[0:40].split()
         ihedfm, iddnfm, ihedun, iddnun = t[0], t[1], int(t[2]), int(t[3])

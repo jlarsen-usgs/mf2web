@@ -2,7 +2,7 @@ from flopy.pakbase import Package
 import sys
 
 
-class Modflow88Sip(Package):
+class Modflow88Sor(Package):
     """
     Class to read modflow88 Strongly implicit proceedure
      package input.
@@ -10,28 +10,25 @@ class Modflow88Sip(Package):
     See modflow 88 documentation....
     """
 
-    def __init__(self, model, mxiter=50, nparm=5, accl=1.,
-                 hclose=0.01, ipcalc=1, wseed=0.98, iprsip=10):
+    def __init__(self, model, mxiter=50, accl=1.,
+                 hclose=0.01, iprsor=0):
 
-        unitnumber = 9
+        unitnumber = 11
         filenames = [None]
-        name = [Modflow88Sip.ftype()]
+        name = [Modflow88Sor.ftype()]
         units = [unitnumber]
         extra = [""]
         fname = [filenames[0]]
-        extension = "sip"
+        extension = "sor"
 
-        super(Modflow88Sip, self).__init__(self, model, extension=extension,
+        super(Modflow88Sor, self).__init__(self, model, extension=extension,
                                            name=name, unit_number=units, extra=extra,
                                            filenames=fname)
 
         self.mxiter = mxiter
-        self.nparm = nparm
         self.accl = accl
         self.hclose = hclose
-        self.ipcalc = ipcalc
-        self.wseed = wseed
-        self.iprsip = iprsip
+        self.iprsor = iprsor
         self.parent.add_package(self)
 
     @staticmethod
@@ -56,7 +53,7 @@ class Modflow88Sip(Package):
         """
 
         if model.verbose:
-            sys.stdout.write('loading bas6 package file...\n')
+            sys.stdout.write('loading sor package file...\n')
 
         if not hasattr(f, 'read'):
             filename = f
@@ -66,19 +63,13 @@ class Modflow88Sip(Package):
             nrow, ncol, nlay, nper = model.nrow_ncol_nlay_nper
 
         t = f.readline().strip().split()
-        mxiter, nparm = int(t[0]), int(t[1])
+        mxiter= int(t[0])
 
         t = f.readline().strip().split()
-        accl, hclose, ipcalc = float(t[0]), float(t[1]), int(t[2])
+        accl, hclose, iprsor = float(t[0]), float(t[1]), int(t[2])
 
-        wseed = 0.98
-        iprsip = 10
-        if ipcalc == 0:
-            wseed, iprsip = float(t[3]), int(t[4])
-
-        return Modflow88Sip(model, mxiter, nparm, accl, hclose,
-                            ipcalc, wseed, iprsip)
+        return Modflow88Sor(model, mxiter, accl, hclose, iprsor)
 
     @staticmethod
     def ftype():
-        return "SIP"
+        return "SOR"
