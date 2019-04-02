@@ -22,7 +22,7 @@ class Modflow88Rch(Package):
         fname = [filenames[0]]
         extension = "rch"
 
-        super(Modflow88Rch, self).__init__(self, model, extension=extension,
+        super(Modflow88Rch, self).__init__(model, extension=extension,
                                            name=name, unit_number=units, extra=extra,
                                            filenames=fname)
 
@@ -30,12 +30,12 @@ class Modflow88Rch(Package):
 
         self.nrchop = nrchop
 
-        self.rech = Transient2d(model, (nrow, ncol), np.float,
+        self.rech = Transient2d(model, (nrow, ncol), np.float32,
                                 rech, name='rech')
 
         self.irch = None
         if self.nrchop == 2:
-            self.irch = Transient2d(model, (nrow, ncol), np.int,
+            self.irch = Transient2d(model, (nrow, ncol), np.int32,
                                     irch, name='irch')
         self.parent.add_package(self)
 
@@ -86,7 +86,7 @@ class Modflow88Rch(Package):
                 rech[per] = rech[per - 1]
 
             else:
-                arr = Util2d.load(f, model, (nrow, ncol), np.float, 'rech',
+                arr = Util2d.load(f, model, (nrow, ncol), np.float32, 'rech',
                                   ext_unit_dict)
 
                 rech[per] = arr
@@ -96,7 +96,7 @@ class Modflow88Rch(Package):
                     irch[per] = irch[per - 1]
 
                 else:
-                    arr = Util2d.load(f, model, (nrow, ncol), np.int, "irch",
+                    arr = Util2d.load(f, model, (nrow, ncol), np.int32, "irch",
                                       ext_unit_dict)
 
                     irch[per] = arr

@@ -21,7 +21,7 @@ class Modflow88Sor(Package):
         fname = [filenames[0]]
         extension = "sor"
 
-        super(Modflow88Sor, self).__init__(self, model, extension=extension,
+        super(Modflow88Sor, self).__init__(model, extension=extension,
                                            name=name, unit_number=units, extra=extra,
                                            filenames=fname)
 

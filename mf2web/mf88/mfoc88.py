@@ -19,7 +19,7 @@ class Modflow88Oc(Package):
         name = [Modflow88Oc.ftype()]
         extra = [""]
 
-        super(Modflow88Oc, self).__init__(self, model, extension=extension,
+        super(Modflow88Oc, self).__init__(model, extension=extension,
                                           name=name, unit_number=unitnumber,
                                           extra=extra, filenames=filenames)
 

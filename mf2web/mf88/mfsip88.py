@@ -21,7 +21,7 @@ class Modflow88Sip(Package):
         fname = [filenames[0]]
         extension = "sip"
 
-        super(Modflow88Sip, self).__init__(self, model, extension=extension,
+        super(Modflow88Sip, self).__init__(model, extension=extension,
                                            name=name, unit_number=units, extra=extra,
                                            filenames=fname)
 

@@ -21,10 +21,11 @@ class Modflow88Riv(Package):
         fname = [filenames[0]]
         extension = "riv"
 
-        super(Modflow88Riv, self).__init__(self, model, extension=extension,
+        super(Modflow88Riv, self).__init__(model, extension=extension,
                                            name=name, unit_number=units, extra=extra,
                                            filenames=fname)
 
+        self.dtype = self.get_default_dtype()
         self.stress_period_data = MfList(self, stress_period_data)
         self.parent.add_package(self)
 

@@ -22,25 +22,25 @@ class Modflow88Evt(Package):
         fname = [filenames[0]]
         extension = "rch"
 
-        super(Modflow88Evt, self).__init__(self, model, extension=extension,
+        super(Modflow88Evt, self).__init__(model, extension=extension,
                                            name=name, unit_number=units, extra=extra,
                                            filenames=fname)
 
         nrow, ncol, nlay, nper = self.parent.nrow_ncol_nlay_nper
 
         self.nevtop = nevtop
-        self.surf = Transient2d(model, (nrow, ncol), np.float,
+        self.surf = Transient2d(model, (nrow, ncol), np.float32,
                                 surf, name='surf')
 
-        self.evtr = Transient2d(model, (nrow, ncol), np.float,
+        self.evtr = Transient2d(model, (nrow, ncol), np.float32,
                                 evtr, name='evtr')
 
-        self.exdp = Transient2d(model, (nrow, ncol), np.float,
+        self.exdp = Transient2d(model, (nrow, ncol), np.float32,
                                 exdp, name='exdp')
 
         self.ievt = None
         if nevtop == 2:
-            self.ievt = Transient2d(model, (nrow, ncol), np.float,
+            self.ievt = Transient2d(model, (nrow, ncol), np.int32,
                                     ievt, name='ievt')
         self.parent.add_package(self)
 
@@ -97,26 +97,26 @@ class Modflow88Evt(Package):
             if insurf < 0:
                 surf[per] = surf[per - 1]
             else:
-                surf[per] = Util2d.load(f, model, (nrow, ncol), np.float, 'surf',
+                surf[per] = Util2d.load(f, model, (nrow, ncol), np.float32, 'surf',
                                         ext_unit_dict)
 
             if inevtr < 0:
                 evtr[per] = evtr[per - 1]
             else:
-                evtr[per] = Util2d.load(f, model, (nrow, ncol), np.float, 'evtr',
+                evtr[per] = Util2d.load(f, model, (nrow, ncol), np.float32, 'evtr',
                                         ext_unit_dict)
 
             if inexdp < 0:
                 exdp[per] = exdp[per - 1]
             else:
-                exdp[per] = Util2d.load(f, model, (nrow, ncol), np.float, 'exdp',
+                exdp[per] = Util2d.load(f, model, (nrow, ncol), np.float32, 'exdp',
                                         ext_unit_dict)
 
             if nevtop == 2:
                 if inievt < 0:
                     ievt[per] = ievt[per - 1]
                 else:
-                    ievt[per] = Util2d.load(f, model, (nrow, ncol), np.float, 'ievt',
+                    ievt[per] = Util2d.load(f, model, (nrow, ncol), np.int32, 'ievt',
                                             ext_unit_dict)
 
         return Modflow88Evt(model, nevtop, ievtcb, surf, evtr, exdp, ievt)

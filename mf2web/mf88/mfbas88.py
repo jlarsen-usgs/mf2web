@@ -25,7 +25,7 @@ class Modflow88Bas(Package):
         fname = [filenames[0]]
         extension = "bas"
 
-        super(Modflow88Bas, self).__init__(self, model, extension=extension,
+        super(Modflow88Bas, self).__init__(model, extension=extension,
                                            name=name, unit_number=units, extra=extra,
                                            filenames=fname)
 
@@ -35,21 +35,22 @@ class Modflow88Bas(Package):
         self.ncol = ncol
         self.nper = nper
         self.itemuni = itemuni
+        self.lenuni = 0
         self.iunit = iunit
         self.iapart = iapart
         self.istrt = istrt
         self.ibound = Util3d(model, (nlay, nrow, ncol), np.int32, ibound,
                              name='ibound', locat=self.unit_number[0])
         self.hnoflo = hnoflo
-        self.shead = Util3d(model, (nlay, nrow, ncol), np.float, shead,
+        self.shead = Util3d(model, (nlay, nrow, ncol), np.float32, shead,
                             name='shead', locat=self.unit_number[0])
 
-        self.perlen = Util2d(model, (self.nper,), np.float, perlen,
+        self.perlen = Util2d(model, (self.nper,), np.float32, perlen,
                              name="perlen")
-        self.nstp = Util2d(model, (self.nper,), np.int, nstp,
+        self.nstp = Util2d(model, (self.nper,), np.int32, nstp,
                            name='nstp')
 
-        self.tsmult = Util2d(model, (self.nper,), np.float, tsmult,
+        self.tsmult = Util2d(model, (self.nper,), np.float32, tsmult,
                              name='tsmult')
 
         self.start_datetime = start_datetime
@@ -102,6 +103,8 @@ class Modflow88Bas(Package):
                 if unit < 0:
                     unit = 0
                 iunit.append(unit)
+                i0 += 3
+                i1 += 3
             except ValueError:
                 break
 
@@ -115,7 +118,8 @@ class Modflow88Bas(Package):
 
         hnoflo = float(f.readline()[0:10])
 
-        shead = Util3d.load(f, model, (nlay, nrow, ncol), np.float, "shead",
+
+        shead = Util3d.load(f, model, (nlay, nrow, ncol), np.float32, "shead",
                             ext_unit_dict)
 
         perlen = []
@@ -128,8 +132,8 @@ class Modflow88Bas(Package):
             a2 = int(a2)
             a3 = float(a3)
             perlen.append(a1)
-            perlen.append(a2)
-            perlen.append(a3)
+            nstp.append(a2)
+            tsmult.append(a3)
 
         return Modflow88Bas(model, nlay, nrow, ncol, nper, itemuni,
                             iunit, iapart, istrt, ibound, hnoflo,

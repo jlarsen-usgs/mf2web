@@ -29,12 +29,14 @@ class Modflow88(BaseModel):
         is mf88 going to be verbose?
     """
     def __init__(self, modelname="modflowtest", scriptfile_ext=".sh",
-                 exe_name="mf88.exe", model_ws=".", verbose=False, **kwargs):
+                 exe_name="mf88.exe", model_ws=".", verbose=False,
+                 lenuni=0, **kwargs):
 
-        super(Modflow88, self).__init__(self, modelname, scriptfile_ext,
+        super(Modflow88, self).__init__(modelname, scriptfile_ext,
                                         exe_name, model_ws, structured=True,
                                         verbose=verbose, **kwargs)
 
+        self.__LENUNI = {'u': 0, "f": 1, "m": 2, "c": 3}
         self.array_format = "modflow"
         self.load_fail = False
         self._next_ext_unit = 91
@@ -47,6 +49,10 @@ class Modflow88(BaseModel):
 
         self.hpth = None
         self.cpath = None
+
+        self._lenuni = lenuni
+        if isinstance(lenuni, str):
+            self._lenuni = self.__LENUNI[lenuni.lower()[0]]
 
         # Create a dictionary to map package with the iunit location.
         # This is used for loading models.
@@ -86,6 +92,20 @@ class Modflow88(BaseModel):
             s = ('MODFLOW-88 {} layer(s) {} row(s) {} column(s) '
                  '{} stress period(s)'.format(nlay, nrow, ncol, nper))
         return s
+
+    @property
+    def lenuni(self):
+        return self._lenuni
+
+    @lenuni.setter
+    def lenuni(self, lenuni):
+        if isinstance(lenuni, str):
+            self._lenuni = self.__LENUNI[lenuni.lower()[0]]
+        else:
+            self._lenuni = lenuni
+
+        if self.bas is not None:
+            self.bas.lenuni = self._lenuni
 
     @property
     def modeltime(self):
@@ -201,7 +221,7 @@ class Modflow88(BaseModel):
 
     @staticmethod
     def load(f, exe_name='mf88.exe', verbose=False,
-             model_ws='.', forgive=True):
+             model_ws='.', forgive=True, lenuni=0):
         """
         Load an existing MODFLOW model.
 
@@ -218,6 +238,9 @@ class Modflow88(BaseModel):
         forgive : bool, optional
             Option to raise exceptions on package load failure, which can be
             useful for debugging. Default False.
+        lenuni : int, str
+            length unit for model. Not in mf88 but useful for exporting
+
 
         Returns
         -------
@@ -241,13 +264,15 @@ class Modflow88(BaseModel):
                        model_ws=model_ws)
 
         # create utility to parse the script file!
-        ext_unit_dict = parse_scriptfile(scriptfile_path)
+        ext_unit_dict = parse_scriptfile(scriptfile_path, model_ws)
 
         basfile = ext_unit_dict.pop("BAS")
         pak = ml.mfnam_packages["BAS"]
-        bas = pak.load(os.path.join(model_ws, basfile), ml)
+        bas = pak.load(os.path.join(model_ws, basfile.filename), ml,
+                       ext_unit_dict=ext_unit_dict)
 
         # get active packages!
+        ml.lenuni = lenuni
         iunit = bas.iunit
 
         for pos, unit in enumerate(iunit):
@@ -257,7 +282,7 @@ class Modflow88(BaseModel):
                     try:
                         pak = ml.mfnam_packages[pos]
                         fname = ext_unit_dict.pop(unit)
-                        pak.load(os.path.join(model_ws, fname), ml,
+                        pak.load(os.path.join(model_ws, fname.filename), ml,
                                  ext_unit_dict=ext_unit_dict)
                     except Exception as e:
                         print("Package load error: iunit position {}".format(pos + 1))
@@ -268,7 +293,7 @@ class Modflow88(BaseModel):
                         print("iunit position not implemented {}".format(pos + 1))
                         continue
                     fname = ext_unit_dict.pop(unit)
-                    pak.load(os.path.join(model_ws, fname), ml,
+                    pak.load(os.path.join(model_ws, fname.filename), ml,
                              ext_unit_dict=ext_unit_dict)
 
             else:

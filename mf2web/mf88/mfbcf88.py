@@ -24,23 +24,41 @@ class Modflow88Bcf(Package):
         fname = [filenames[0]]
         extension = "bas"
 
-        super(Modflow88Bcf, self).__init__(self, model, extension=extension,
+        super(Modflow88Bcf, self).__init__(model, extension=extension,
                                            name=name, unit_number=units, extra=extra,
                                            filenames=fname)
 
+        nrow, ncol, nlay, nper = model.nrow_ncol_nlay_nper
+
         self.iss = iss
         self.ibcfcb = ibcfcb
-        self.laycon = laycon
-        self.trpy = trpy
-        self.delr = delr
-        self.delc = delc
-        self.sf1 = sf1
-        self.tran = tran
-        self.hy = hy
-        self.bot = bot
-        self.vcont = vcont
-        self.sf2 = sf2
-        self.top = top
+        self.laycon = Util2d(model, (nlay,), np.int32, laycon, name='laycon',
+                             locat=self.unit_number[0])
+        self.trpy = Util2d(model, (nlay,), np.float32, trpy,
+                           name='Anisotropy factor', locat=self.unit_number[0])
+        self.delr = Util2d(model, (ncol,), np.float32, delr, name='delr',
+                           locat=self.unit_number[0])
+        self.delc = Util2d(model, (nrow,), np.float32, delc, name='delc',
+                           locat=self.unit_number[0])
+        self.sf1 = Util3d(model, (nlay, nrow, ncol), np.float32, sf1,
+                          'Primary Storage Coefficient',
+                          locat=self.unit_number[0])
+        self.tran = Util3d(model, (nlay, nrow, ncol), np.float32, tran,
+                           'Transmissivity', locat=self.unit_number[0])
+        self.hy = Util3d(model, (nlay, nrow, ncol), np.float32, hy,
+                         'Horizontal Hydraulic Conductivity',
+                         locat=self.unit_number[0])
+        self.bot = Util3d(model, (nlay, nrow, ncol), np.float32, bot,
+                           'bot', locat=self.unit_number[0])
+        self.vcont = Util3d(model, (nlay - 1, nrow, ncol), np.float32,
+                                vcont,
+                                'Vertical Conductance',
+                                locat=self.unit_number[0])
+        self.sf2 = Util3d(model, (nlay, nrow, ncol), np.float32, sf2,
+                          'Secondary Storage Coefficient',
+                          locat=self.unit_number[0])
+        self.top = Util3d(model, (nlay, nrow, ncol), np.float32, top,
+                           'top', locat=self.unit_number[0])
 
         self.parent.add_package(self)
 
@@ -123,38 +141,38 @@ class Modflow88Bcf(Package):
             if iss != 0:
                 t = Util2d.load(f, model, (nrow, ncol), np.float32, 'sf1',
                                 ext_unit_dict)
-                sf1[k] = t
+                sf1[k] = t.array
 
             # tran or hy and bot
             if ((laycon[k] == 0) or (laycon[k] == 2)):
                 t = Util2d.load(f, model, (nrow, ncol), np.float32, 'tran',
                                 ext_unit_dict)
-                tran[k] = t
+                tran[k] = t.array
             else:
                 t = Util2d.load(f, model, (nrow, ncol), np.float32, 'hy',
                                 ext_unit_dict)
-                hy[k] = t
+                hy[k] = t.array
 
                 t = Util2d.load(f, model, (nrow, ncol), np.float32, 'bot',
                                 ext_unit_dict)
-                bot[k] = t
+                bot[k] = t.array
 
             # vcont
             if k < (nlay - 1):
                 t = Util2d.load(f, model, (nrow, ncol), np.float32, 'vcont',
                                 ext_unit_dict)
-                vcont[k] = t
+                vcont[k] = t.array
 
             # sf2
             if (iss != 0 and ((laycon[k] == 2) or (laycon[k] == 3))):
                 t = Util2d.load(f, model, (nrow, ncol), np.float32, 'sf2',
                                 ext_unit_dict)
-                sf2[k] = t
+                sf2[k] = t.array
 
             if laycon[k] == 2 or laycon[k] == 3:
                 t = Util2d.load(f, model, (nrow, ncol), np.float32, 'top',
                                 ext_unit_dict)
-                top[k] = t
+                top[k] = t.array
 
         return Modflow88Bcf(model, iss, ibcfcb, laycon, trpy, delr, delc,
                             sf1, tran, hy, bot, vcont, sf2, top)
