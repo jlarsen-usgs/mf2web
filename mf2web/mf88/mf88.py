@@ -63,7 +63,7 @@ class Modflow88(BaseModel):
             2: mf2web.mf88.Modflow88Drn,
             3: mf2web.mf88.Modflow88Riv,
             4: mf2web.mf88.Modflow88Evt,
-            5: None,
+            5: mf2web.mf88.Modflow88Hfb,
             6: mf2web.mf88.Modflow88Ghb,
             7: mf2web.mf88.Modflow88Rch,
             8: mf2web.mf88.Modflow88Sip,
