@@ -1,6 +1,7 @@
 import os
 import flopy as fp
-from  .seawat import Seawat
+from .seawat import Seawat
+from .mf88 import Modflow88
 
 
 class GwWebFlow(object):
@@ -72,6 +73,12 @@ class GwWebFlow(object):
         elif self.version == "mf6":
             raise NotImplementedError()
 
+        elif self.version == "mf88":
+            self.model = Modflow88.load(os.path.join(self.model_ws,
+                                                     self.namefile),
+                                        model_ws=model_ws,
+                                        lenuni=self.length_unit)
+
         elif self.version in ("gsflow", "mfowhm",
                               "mf88", "mf96", "mf2000"):
             err = "{} is not yet supported".format(self.version)
@@ -85,7 +92,10 @@ class GwWebFlow(object):
                                                  version=self.version,
                                                  check=False)
 
-        self.model.dis.start_datetime = self.start_date + ' ' + self.start_time
+        if self.version == "mf88":
+            self.model.bas.start_datetime = self.start_date + " " + self.start_time
+        else:
+            self.model.dis.start_datetime = self.start_date + ' ' + self.start_time
 
         if (self.xll, self.yll) != (None, None):
             self.model.modelgrid.set_coord_info(self.xll, self.yll, self.rotation,
@@ -151,6 +161,9 @@ class GwWebFlow(object):
         if self.output_files is None:
             return
 
+        if self.version == "mf88":
+            raise NotImplementedError("output not yet implemented for mf88")
+
         ncf_name = self.report_id + ".out.nc"
 
         export_dict = {}
@@ -214,6 +227,8 @@ class GwWebFlow(object):
                                         self.version = "mf6"
                                     elif "2000" in data.lower():
                                         self.version = "mf2k"
+                                    elif "88" in data.lower():
+                                        self.version = "mf88"
                                     else:
                                         print("Warning, Unrecognised version: {}".format(data))
                                         print("Setting version to modflow-2005")

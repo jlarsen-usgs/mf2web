@@ -101,6 +101,8 @@ class Modflow88(BaseModel):
     def lenuni(self, lenuni):
         if isinstance(lenuni, str):
             self._lenuni = self.__LENUNI[lenuni.lower()[0]]
+        elif lenuni is None:
+            self._lenuni = 0
         else:
             self._lenuni = lenuni
 
@@ -218,6 +220,41 @@ class Modflow88(BaseModel):
 
     def load_results(self, **kwargs):
         pass
+
+    def __getattr__(self, item):
+        """
+        __getattr__ - syntactic sugar
+
+        Parameters
+        ----------
+        item : str
+            3 character package name (case insensitive) or "sr" to access
+            the SpatialReference instance of the ModflowDis object
+
+
+        Returns
+        -------
+        sr : SpatialReference instance
+        pp : Package object
+            Package object of type :class:`flopy.pakbase.Package`
+
+        Note
+        ----
+        if self.dis is not None, then the spatial reference instance is updated
+        using self.dis.delr, self.dis.delc, and self.dis.lenuni before being
+        returned
+        """
+        if item == 'sr':
+                return None
+        if item == 'tr':
+                return None
+        if item == "start_datetime":
+            if self.bas is not None:
+                return self.bas.start_datetime
+            else:
+                return None
+
+        return self.get_package(item)
 
     @staticmethod
     def load(f, exe_name='mf88.exe', verbose=False,
