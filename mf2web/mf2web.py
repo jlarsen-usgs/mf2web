@@ -1,5 +1,6 @@
 import os
 import flopy as fp
+import numpy as np
 from .seawat import Seawat
 from .mf88 import Modflow88
 
@@ -29,6 +30,8 @@ class GwWebFlow(object):
             optional model workspace parameter, useful if
             all model files are in the same directory
 
+        length_multiplier : float
+            optional model length conversion factor
     Notes
     -----
     usage
@@ -42,7 +45,7 @@ class GwWebFlow(object):
     VERSION = {}
 
     def __init__(self, namfile, reference_file, report_id,
-                 output_files=None, model_ws=""):
+                 output_files=None, model_ws="", length_multiplier=None):
 
         self.namefile = os.path.split(namfile)[-1]
         self.reference = reference_file
@@ -54,6 +57,7 @@ class GwWebFlow(object):
         self.xul = None
         self.yul = None
         self.rotation = None
+        self.length_multiplier = length_multiplier
         self.length_unit = None
         self.time_unit = None
         self.start_date = None
@@ -96,6 +100,28 @@ class GwWebFlow(object):
             self.model.bas.start_datetime = self.start_date + " " + self.start_time
         else:
             self.model.dis.start_datetime = self.start_date + ' ' + self.start_time
+
+        if self.length_multiplier is not None:
+            if self.version == "mf88":
+                delr = self.model.bcf.delr.array * length_multiplier
+                delc = self.model.bcf.delc.array * length_multiplier
+                nrow, ncol, nlay, nper = self.model.nrow_ncol_nlay_nper
+
+                self.model.bcf.delr = fp.utils.Util2d(self.model, (ncol,), np.float32,
+                                                      delr, name="delr", locat=self.model.dis.unit_number[0])
+
+                self.model.bcf.delc = fp.utils.Util2d(self.model, (nrow,), np.float32,
+                                                      delc, name="delr", locat=self.model.dis.unit_number[0])
+
+            else:
+                delr = self.model.dis.delr.array * length_multiplier
+                delc = self.model.dis.delc.array * length_multiplier
+
+                self.model.dis.delr = fp.utils.Util2d(self.model, (self.model.dis.ncol,), np.float32,
+                                                      delr, name="delr", locat=self.model.dis.unit_number[0])
+
+                self.model.dis.delc = fp.utils.Util2d(self.model, (self.model.dis.nrow,), np.float32,
+                                                      delc, name="delr", locat=self.model.dis.unit_number[0])
 
         if (self.xll, self.yll) != (None, None):
             self.model.modelgrid.set_coord_info(self.xll, self.yll, self.rotation,
