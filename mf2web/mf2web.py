@@ -50,13 +50,14 @@ class GwWebFlow(object):
     ITEMUNI = {}
     VERSION = {}
 
-    def __init__(self, namfile, reference_file, report_id,
+    def __init__(self, namfile, reference_file, report_id, scenario="0",
                  output_files=None, model_ws="", length_multiplier=None):
 
         self.namefile = os.path.split(namfile)[-1]
         self.reference = reference_file
         self.output_files = output_files
         self.report_id = report_id
+        self.scenario = scenario
         self.model_ws = model_ws
         self.xll = None
         self.yll = None
@@ -212,7 +213,7 @@ class GwWebFlow(object):
         Method that writes a netcdf input file from
         modflow model files
         """
-        ncf_name = self.report_id + ".in.nc"
+        ncf_name = ".".join([self.report_id, self.scenario, "in", "nc"])
         if self.version == "gsflow":
             self.model.export_nc(ncf_name)
         else:
@@ -231,7 +232,7 @@ class GwWebFlow(object):
         if self.version == "mf88":
             raise NotImplementedError("output not yet implemented for mf88")
 
-        ncf_name = self.report_id + ".out.nc"
+        ncf_name = ".".join([self.report_id, self.scenario, "out", "nc"])
 
         export_dict = {}
         for key, value in self.output_files.items():
@@ -248,7 +249,10 @@ class GwWebFlow(object):
 
             export_dict[key.lower()] = out
 
-        fp.export.utils.output_helper(ncf_name, self.model, export_dict)
+        if self.version == "gsflow":
+            fp.export.utils.output_helper(ncf_name, self.model.mf, export_dict)
+        else:
+            fp.export.utils.output_helper(ncf_name, self.model, export_dict)
 
     def _read_usgs_model_reference_file(self):
         """
