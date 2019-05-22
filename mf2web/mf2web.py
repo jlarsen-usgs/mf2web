@@ -89,8 +89,7 @@ class GwWebFlow(object):
                                         model_ws=model_ws,
                                         lenuni=self.length_unit)
 
-        elif self.version in ("gsflow", "mfowhm",
-                              "mf88", "mf96", "mf2000"):
+        elif self.version in ("mfowhm", "mf96"):
             err = "{} is not yet supported".format(self.version)
             raise NotImplementedError(err)
 
@@ -111,6 +110,9 @@ class GwWebFlow(object):
 
         if self.version == "mf88":
             self.model.bas.start_datetime = self.start_date + " " + self.start_time
+
+        elif self.version == "gsflow":
+            self.model.mf.dis.start_datetime = self.start_date + " " + self.start_time
         else:
             self.model.dis.start_datetime = self.start_date + ' ' + self.start_time
 
@@ -134,7 +136,7 @@ class GwWebFlow(object):
                                                          np.float32, delr, name="delr",
                                                          locat=self.model.mf.dis.unit_number[0])
 
-                self.model.mf.dis.delc = fp.utils.Util2d(self.model, (self.model.mf.dis.nrow,),
+                self.model.mf.dis.delc = fp.utils.Util2d(self.model.mf, (self.model.mf.dis.nrow,),
                                                          np.float32, delc, name="delr",
                                                          locat=self.model.mf.dis.unit_number[0])
 
@@ -296,6 +298,8 @@ class GwWebFlow(object):
                                         self.version = "mf2k"
                                     elif "88" in data.lower():
                                         self.version = "mf88"
+                                    elif "gs" in data.lower():
+                                        self.version = "gsflow"
                                     else:
                                         print("Warning, Unrecognised version: {}".format(data))
                                         print("Setting version to modflow-2005")
