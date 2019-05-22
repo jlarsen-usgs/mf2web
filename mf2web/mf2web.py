@@ -3,6 +3,12 @@ import flopy as fp
 import numpy as np
 from .seawat import Seawat
 from .mf88 import Modflow88
+try:
+    import gsflow
+except ImportError:
+    gsflow = None
+    print("Install pyGSFLOW for gsflow capabilities")
+    print("https://github.com/usgs-pygsflow/pygsflow")
 
 
 class GwWebFlow(object):
@@ -13,7 +19,7 @@ class GwWebFlow(object):
     Parameters
     ----------
         namfile : str
-            modflow name file name
+            modflow name file name or gsflow control file
         reference_file : str
             usgs model refence file for archiving
         report_id : str
@@ -88,6 +94,13 @@ class GwWebFlow(object):
             err = "{} is not yet supported".format(self.version)
             raise NotImplementedError(err)
 
+        elif self.version == "gsflow":
+            if gsflow is None:
+                raise ImportError("pygsflow must be installed for GSFLOW models")
+
+            self.model = gsflow.GsflowModel.load_from_file(os.path.join(model_ws,
+                                                                        self.namefile))
+
         else:
             # method for modflow-2000, 2005, and nwt models
             self.model = fp.modflow.Modflow.load(os.path.join(model_ws,
@@ -113,6 +126,18 @@ class GwWebFlow(object):
                 self.model.bcf.delc = fp.utils.Util2d(self.model, (nrow,), np.float32,
                                                       delc, name="delr", locat=self.model.dis.unit_number[0])
 
+            elif self.version == "gsflow":
+                delr = self.model.mf.dis.delr.array * length_multiplier
+                delc = self.model.mf.dis.delc.array * length_multiplier
+
+                self.model.mf.dis.delr = fp.utils.Util2d(self.model.mf, (self.model.mf.dis.ncol,),
+                                                         np.float32, delr, name="delr",
+                                                         locat=self.model.mf.dis.unit_number[0])
+
+                self.model.mf.dis.delc = fp.utils.Util2d(self.model, (self.model.mf.dis.nrow,),
+                                                         np.float32, delc, name="delr",
+                                                         locat=self.model.mf.dis.unit_number[0])
+
             else:
                 delr = self.model.dis.delr.array * length_multiplier
                 delc = self.model.dis.delc.array * length_multiplier
@@ -124,8 +149,15 @@ class GwWebFlow(object):
                                                       delc, name="delr", locat=self.model.dis.unit_number[0])
 
         if (self.xll, self.yll) != (None, None):
-            self.model.modelgrid.set_coord_info(self.xll, self.yll, self.rotation,
-                                                self.epsg, self.proj4)
+            if self.version == "gsflow":
+                self.model.mf.modelgrid.set_coord_info(self.xll, self.yll,
+                                                       self.rotation,
+                                                       self.epsg,
+                                                       self.proj4)
+            else:
+                self.model.modelgrid.set_coord_info(self.xll, self.yll,
+                                                    self.rotation,
+                                                    self.epsg, self.proj4)
 
             if self.version == "seawat":
                 if self.model._mf is not None:
@@ -140,13 +172,10 @@ class GwWebFlow(object):
 
         if (self.xul, self.yul) != (None, None):
             if self.rotation is not None:
-                self.model.modelgrid._angrot = self.rotation
-
-            self.model.modelgrid._xoff = self.model.modelgrid._xul_to_xll(self.xul)
-            self.model.modelgrid._yoff = self.model.modelgrid._yul_to_yll(self.yul)
-            self.model.modelgrid.epsg = self.epsg
-            self.model.modelgrid.proj4 = self.proj4
-            self.model.modelgrid._require_cache_updates()
+                if self.version == "gsflow":
+                    self.model.mf.modelgrid._angrot = self.rotation
+                else:
+                    self.model.modelgrid._angrot = self.rotation
 
             if self.version == "seawat":
                 if self.model._mf is not None:
@@ -169,13 +198,23 @@ class GwWebFlow(object):
                     self.model._mt.modelgrid.proj4 = self.proj4
                     self.model._mt.modelgrid._require_cache_updates()
 
+            elif self.version == "gsflow":
+                self.model.mf.modelgrid._xoff = self.model.mf.modelgrid._xul_to_xll(self.xul)
+                self.model.mf.modelgrid._yoff = self.model.mf.modelgrid._yul_to_yll(self.yul)
+                self.model.mf.modelgrid.epsg = self.epsg
+                self.model.mf.modelgrid.proj4 = self.proj4
+                self.model.mf.modelgrid._require_cache_updates()
+
     def create_netcdf_input_file(self):
         """
         Method that writes a netcdf input file from
         modflow model files
         """
         ncf_name = self.report_id + ".in.nc"
-        self.model.export(ncf_name)
+        if self.version == "gsflow":
+            self.model.export_nc(ncf_name)
+        else:
+            self.model.export(ncf_name)
 
     def create_netcdf_output_file(self):
         """
@@ -198,6 +237,8 @@ class GwWebFlow(object):
                 out = fp.utils.UcnFile(os.path.join(self.model_ws, value))
             elif key.upper() == "HDS":
                 out = fp.utils.HeadFile(os.path.join(self.model_ws, value))
+            elif key.upper() == "FHD":
+                out = fp.utils.FormattedHeadFile(os.path.join(self.model_ws, value))
             elif key.upper() == "CBC":
                 out = fp.utils.CellBudgetFile(os.path.join(self.model_ws, value))
             else:
