@@ -13,7 +13,7 @@ pyGSFLOW: https://github.com/pygsflow/pygsflow
 
 An example script:
 
-```
+```python
 from mf2web import GwWebFlow
 import os
 
