@@ -46,24 +46,17 @@ gwweb.create_netcdf_output_file()
 ### Note:
 The USGS model refence file must include these parameters:
 
-xll          509549.09    # can be xul in lieu of xll
-
-yll          4238865.14   # can be yul in lieu of yll
-
-rotation     0
-
-length_unit  feet
-
-time_units   days
-
-start_date   10/1/1974
-
-start_time   00:00:00
-
-model        gsflow
-
-epsg 26910                # epsg is optional 
-
-proj4 +proj=utm +zone=10 +ellps=GRS80 +datum=NAD83 +units=m +no_defs  
+```
+xll          509549.09    # can be xul in lieu of xll  
+yll          4238865.14   # can be yul in lieu of yll  
+rotation     0  
+length_unit  feet  
+time_units   days  
+start_date   10/1/1974  
+start_time   00:00:00  
+model        gsflow  
+epsg 26910                # epsg is optional   
+proj4 +proj=utm +zone=10 +ellps=GRS80 +datum=NAD83 +units=m +no_defs 
+```
 
 
