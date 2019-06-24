@@ -9,6 +9,14 @@ flopy: https://github.com/modflowpy/flopy/tree/master
 
 pyGSFLOW: https://github.com/pygsflow/pygsflow
 
+## Installation
+Download the mf2web repository and then open a command promt or anaconda promt window  
+cd to the mf2web package directory (where setup.py is located) and then type
+```
+pip install -e .
+```
+mf2web is now installed
+
 ## Usage
 
 An example script:
