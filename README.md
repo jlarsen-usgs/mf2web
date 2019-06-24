@@ -34,7 +34,7 @@ ipds = "2015-5052"
 
 gwweb = GwWebFlow(nam, reference, ipds,
                   scenario="0",
-                  output_files=("FHD": hed,
+                  output_files={"FHD": hed,
                                 "CBC": cbc},
                   model_ws=iws,
                   length_multiplier=0.3048)
