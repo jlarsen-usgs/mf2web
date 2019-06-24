@@ -25,7 +25,7 @@ An example script:
 from mf2web import GwWebFlow
 import os
 
-iws = r".\SIR2014-5052\input\GSFLOW COUPLED MODEL\
+iws = r".\SIR2014-5052\input\GSFLOW COUPLED MODEL\"
 
 # this can be a modflow nam file or gsflow control file
 nam = os.path.join(iws, "SRPgsf_withAni.control")
