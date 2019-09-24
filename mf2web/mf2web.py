@@ -163,15 +163,20 @@ class GwWebFlow(object):
                                                     self.epsg, self.proj4)
 
             if self.version == "seawat":
+                self.model.modelgrid.set_coord_info(self.xll, self.yll,
+                                                    self.rotation,
+                                                    self.epsg, self.proj4)
                 if self.model._mf is not None:
                     self.model._mf.modelgrid.set_coord_info(self.xll, self.yll,
                                                             self.rotation,
-                                                            self.epsg, self.proj4)
+                                                            self.epsg,
+                                                            self.proj4)
 
                 if self.model._mt is not None:
                     self.model._mt.modelgrid.set_coord_info(self.xll, self.yll,
                                                             self.rotation,
-                                                            self.epsg, self.proj4)
+                                                            self.epsg,
+                                                            self.proj4)
 
         if (self.xul, self.yul) != (None, None):
             if self.rotation is not None:
@@ -184,6 +189,12 @@ class GwWebFlow(object):
                 if self.model._mf is not None:
                     if self.rotation is not None:
                         self.model._mf.modelgrid._angrot = self.rotation
+
+                    self.model._modelgrid._xoff = self.model._modelgrid._xul_to_xll(self.xul)
+                    self.model._modelgrid._yoff = self.model._modelgrid._yul_to_yll(self.yul)
+                    self.model._modelgrid.epsg = self.epsg
+                    self.model._modelgrid.proj4 = self.proj4
+                    self.model._modelgrid._require_cache_updates()
 
                     self.model._mf.modelgrid._xoff = self.model.modelgrid._xul_to_xll(self.xul)
                     self.model._mf.modelgrid._yoff = self.model.modelgrid._yul_to_yll(self.yul)
@@ -219,7 +230,7 @@ class GwWebFlow(object):
         else:
             self.model.export(ncf_name)
 
-    def create_netcdf_output_file(self):
+    def create_netcdf_output_file(self, masked_vals=[]):
         """
         Method that writes a netcdf output file from
         modflow model output files. Currently supports
@@ -250,9 +261,11 @@ class GwWebFlow(object):
             export_dict[key.lower()] = out
 
         if self.version == "gsflow":
-            fp.export.utils.output_helper(ncf_name, self.model.mf, export_dict)
+            fp.export.utils.output_helper(ncf_name, self.model.mf, export_dict,
+                                          masked_vals=masked_vals)
         else:
-            fp.export.utils.output_helper(ncf_name, self.model, export_dict)
+            fp.export.utils.output_helper(ncf_name, self.model, export_dict,
+                                          masked_vals=masked_vals)
 
     def _read_usgs_model_reference_file(self):
         """
